@@ -51,11 +51,9 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
   const subTests = tests.filter((t) => t.subject_id === subjectId);
   const editable = (k) => isAdmin || !marks[k];
 
+  // numbers only, never more than the planned (max) marks
   const check = (t, v) => {
     if (!v) return '';
-    if (normStatus(v)) return '';
-    const sub = subjects.find((s) => s.id === t.subject_id);
-    if (sub?.grade_based) return GRADES.includes(v.toUpperCase()) ? '' : 'grade';
     return /^\d{1,3}(\.\d{1,2})?$/.test(v) && Number(v) <= Number(t.max_marks || 0) ? '' : `max ${fmt(t.max_marks)}`;
   };
 
@@ -83,9 +81,7 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
       changes.forEach(({ k, t, s }) => {
         const v = (draft[k] || '').trim();
         if (!v) { if (marks[k]) dels.push(marks[k].id); return; }
-        const st = normStatus(v);
-        const gb = subjects.find((x) => x.id === t.subject_id)?.grade_based;
-        ups.push({ test_id: t.id, student_id: s.id, status: st || 'P', marks: !st && !gb ? Number(v) : null, grade: !st && gb ? v.toUpperCase() : null });
+        ups.push({ test_id: t.id, student_id: s.id, status: 'P', marks: Number(v), grade: null });
       });
       if (ups.length) {
         const q = isAdmin ? supabase.from('academic_marks').upsert(ups, { onConflict: 'test_id,student_id' }) : supabase.from('academic_marks').insert(ups);
@@ -114,15 +110,15 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
   async function saveTest() {
     const f = form;
     if (!f.test_date) return toast('Choose test date', 'err');
-    if (!subject.grade_based && !(Number(f.max_marks) > 0)) return toast('Enter max marks', 'err');
+    if (!(Number(f.max_marks) > 0)) return toast('Enter total planned marks', 'err');
     const m = Number(f.test_date.slice(5, 7));
     if (m !== ctx.month) return toast(`Test date must be in ${monthLabel(ctx.month)} ${ctx.year}`, 'err');
     setBusy(true);
-    const payload = { session: ctx.session, month: ctx.month, class_id: ctx.classId, subject_id: subjectId, test_date: f.test_date, test_type: f.test_type, topic: f.topic || null, max_marks: subject.grade_based ? null : Number(f.max_marks), teacher_name: f.teacher_name || null };
+    const payload = { session: ctx.session, month: ctx.month, class_id: ctx.classId, subject_id: subjectId, test_date: f.test_date, test_type: f.test_type, topic: f.topic || null, max_marks: Number(f.max_marks), teacher_name: f.teacher_name || null };
     const { error } = f.id ? await supabase.from('academic_tests').update(payload).eq('id', f.id) : await supabase.from('academic_tests').insert(payload);
     setBusy(false);
     if (error) return toast(error.code === '23505' ? 'This test (same date & type) already exists for this subject.' : errMsg(error), 'err');
-    toast(f.id ? 'Test updated' : 'Test added — now enter marks');
+    toast(f.id ? 'Test updated' : 'Now type each student’s achieved marks below');
     setForm(null);
     load();
   }
@@ -161,14 +157,14 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
             })}
           </div>
           <div className="toolbar">
-            <button className="btn btn-ghost btn-sm" disabled={!dateInMonth} onClick={newTest}>+ Add {subject?.name} test on {dmy(ctx.date)}</button>
-            {!dateInMonth && <span className="txt-err small">Choose a date inside {monthLabel(ctx.month)} {ctx.year} to add a test.</span>}
+            <button className="btn btn-ghost btn-sm" disabled={!dateInMonth} onClick={newTest}>✎ Enter Marks — {subject?.name}</button>
+            {!dateInMonth && <span className="txt-err small">Choose a date inside {monthLabel(ctx.month)} {ctx.year} at the top to enter marks.</span>}
             <span className="toolbar-spacer" />
             {changes.length > 0 && <span className="dirty-note">{changes.length} unsaved</span>}
             <button className="btn btn-primary btn-sm" disabled={busy || !changes.length} onClick={save}>{busy ? 'Saving…' : isAdmin ? 'Save marks' : 'Save & lock 🔒'}</button>
           </div>
           {!subTests.length ? (
-            <div className="empty small-empty">No {subject?.name} test in {monthLabel(ctx.month)} yet. Pick the test date at the top, then click “+ Add test”.</div>
+            <div className="empty small-empty">No {subject?.name} marks in {monthLabel(ctx.month)} yet. Pick the test date at the top, then click “Enter Marks”.</div>
           ) : (
             <div className="grid-wrap">
               <table className="grid">
@@ -178,7 +174,7 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
                     {subTests.map((t) => (
                       <th key={t.id} className="c-test">
                         <div className="test-type">{t.test_type}</div>
-                        <div className="test-date">{dmy(t.test_date)} · MM {subject?.grade_based ? 'Grade' : fmt(t.max_marks)}</div>
+                        <div className="test-date">{dmy(t.test_date)} · Planned {fmt(t.max_marks)}</div>
                         {t.topic && <div className="test-topic" title={t.topic}>{t.topic}</div>}
                         {t.teacher_name && <div className="stu-sub">{t.teacher_name}</div>}
                         {isAdmin && (
@@ -201,9 +197,10 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
                         return (
                           <td key={t.id} className="c-test">
                             {editable(k) ? (
-                              <input data-nav={`ac-${r}-${c}`} className={`cell ${errors[k] ? 'cell-bad' : ''} ${normStatus(draft[k]) ? 'cell-na' : ''}`}
-                                value={draft[k] || ''} maxLength={6} title={errors[k]}
-                                onChange={(e) => setDraft((d) => ({ ...d, [k]: e.target.value.trim() }))}
+                              <input data-nav={`ac-${r}-${c}`} className={`cell ${errors[k] ? 'cell-bad' : ''}`}
+                                value={draft[k] || ''} maxLength={6} title={errors[k] || `Achieved marks out of ${fmt(t.max_marks)}`}
+                                inputMode="decimal" placeholder={`/${fmt(t.max_marks)}`}
+                                onChange={(e) => { const v = e.target.value; if (/^\d{0,3}(\.\d{0,2})?$/.test(v)) setDraft((d) => ({ ...d, [k]: v })); }}
                                 onKeyDown={(e) => onKey(e, r, c)} onFocus={(e) => e.target.select()} />
                             ) : <span className="locked-chip" title={`Saved by ${marks[k].entered_name || ''}`}>{markRaw(marks[k])}</span>}
                           </td>
@@ -216,21 +213,22 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
                   <tr>
                     <td className="sticky-col c-roll" /><td className="sticky-col c-name"><b>Class average</b></td>
                     {subTests.map((t) => {
-                      const a = subject?.grade_based ? null : avg(students.map((s) => draft[`${t.id}|${s.id}`] || markRaw(marks[`${t.id}|${s.id}`])).filter((v) => v && !normStatus(v) && !check(t, v)));
-                      return <td key={t.id} className="c-test foot-avg">{fmt(a)}</td>;
+                      const got = students.map((s) => draft[`${t.id}|${s.id}`] || markRaw(marks[`${t.id}|${s.id}`])).filter((v) => v && !normStatus(v) && !check(t, v)).map(Number);
+                      const a = avg(got);
+                      return <td key={t.id} className="c-test foot-avg">{got.length ? <>avg {fmt(a)}/{fmt(t.max_marks)}<div className="stu-sub">{fmt((a / t.max_marks) * 100, 1)}% · {got.length} entered</div></> : '–'}</td>;
                     })}
                   </tr>
                 </tfoot>
               </table>
             </div>
           )}
-          <p className="muted small">Type marks, or <code>Ab</code> absent · <code>NA</code> not applicable · <code>ML</code> medical leave.{subject?.grade_based && ` Grades: ${GRADES.join(' ')}`}</p>
+          <p className="muted small">Type <b>achieved marks</b> (numbers only, up to the planned marks). Leave the box empty if the child was absent.</p>
         </div>
       )}
 
       {form && (
-        <Modal title={form.id ? 'Edit test' : `New ${subject?.name} test — ${ctx.classId}`} onClose={() => setForm(null)}
-          footer={<><button className="btn btn-ghost" onClick={() => setForm(null)}>Cancel</button><button className="btn btn-primary" disabled={busy} onClick={saveTest}>{form.id ? 'Save' : 'Add test'}</button></>}>
+        <Modal title={form.id ? 'Edit test' : `Enter Marks — ${subject?.name} · ${ctx.classId}`} onClose={() => setForm(null)}
+          footer={<><button className="btn btn-ghost" onClick={() => setForm(null)}>Cancel</button><button className="btn btn-primary" disabled={busy} onClick={saveTest}>{form.id ? 'Save' : 'Next: enter achieved marks →'}</button></>}>
           <div className="form-2">
             <Field label="Test date"><input type="date" value={form.test_date} disabled={!isAdmin} onChange={(e) => setForm({ ...form, test_date: e.target.value })} /></Field>
             <Field label="Test type">
@@ -241,7 +239,7 @@ function AcademicCard({ number, heading, students, subjects, isAdmin, ctx, profi
           </div>
           <Field label="Topic / Chapter"><input value={form.topic} placeholder="e.g. Ch 4 Word Meanings" onChange={(e) => setForm({ ...form, topic: e.target.value })} /></Field>
           <div className="form-2">
-            {!subject?.grade_based && <Field label="Max marks"><input inputMode="decimal" value={form.max_marks} onChange={(e) => setForm({ ...form, max_marks: e.target.value.replace(/[^0-9.]/g, '') })} /></Field>}
+            <Field label="Total planned marks" hint="Maximum marks of this test"><input inputMode="decimal" value={form.max_marks} onChange={(e) => { const v = e.target.value; if (/^\d{0,3}(\.\d{0,2})?$/.test(v)) setForm({ ...form, max_marks: v }); }} /></Field>
             <Field label="Subject teacher"><input value={form.teacher_name} onChange={(e) => setForm({ ...form, teacher_name: e.target.value })} /></Field>
           </div>
         </Modal>

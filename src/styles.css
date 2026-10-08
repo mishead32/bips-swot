@@ -423,3 +423,33 @@ td { position: relative; }
   .sh-table { min-width: 900px; }
   .hcard-head { flex-wrap: wrap; }
 }
+
+/* ===================== v3: averages dashboard + class report ===================== */
+.period { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.seg { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; padding: 7px 12px; border-radius: 7px; font-weight: 600; font-size: 13px; cursor: pointer; color: var(--ink-2); white-space: nowrap; }
+.seg button.on { background: var(--brand); color: #fff; }
+.period input[type=month] { width: 200px; }
+.range { display: flex; align-items: center; gap: 8px; }
+.range input { width: 160px; }
+.report-filters { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: end; }
+.report-filters .period { align-items: flex-start; }
+
+.avg-grid th.avg-th { text-align: center; vertical-align: bottom; min-width: 96px; max-width: 120px; white-space: normal; line-height: 1.2; padding: 10px 6px; }
+.avg-num { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.avg-name { display: block; font-weight: 700; color: var(--ink); font-size: 12px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.avg-unit { display: block; font-size: 10px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+.avg-td { text-align: center; }
+.avg-box { display: inline-flex; flex-direction: column; align-items: center; min-width: 54px; padding: 5px 6px; border-radius: 8px; font-family: var(--mono); font-weight: 700; font-size: 13px; background: var(--line-2); color: var(--ink-2); }
+.avg-box small { font-size: 10px; font-weight: 600; opacity: .8; }
+.avg-box.band-high { background: var(--ok-soft); color: var(--ok); }
+.avg-box.band-mid { background: var(--mid-soft); color: var(--mid); }
+.avg-box.band-low { background: var(--bad-soft); color: var(--bad); }
+.avg-empty { color: #c9c6bc; }
+.avg-grid tbody tr:first-child td { }
+@media (max-width: 960px) {
+  .period { align-items: stretch; }
+  .seg { flex-wrap: wrap; }
+  .report-filters { grid-template-columns: 1fr; }
+}
+.avg-grid .c-name { left: 0; min-width: 200px; }

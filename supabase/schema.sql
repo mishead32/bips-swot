@@ -473,4 +473,43 @@ insert into public.subjects (name, grade_based, sort_order) values
   ('Physical Education', false, 19)
 on conflict (name) do nothing;
 
+
+
+-- ---------------------------------------------------------------------
+-- 5. REPORT FUNCTIONS (average marks per class / per student for a period)
+-- ---------------------------------------------------------------------
+create or replace function public.swot_avg(p_from date, p_to date, p_class text default null)
+returns table (class_id text, student_id uuid, heading_code text,
+               avg_score numeric, att_pct numeric, achieved numeric, planned numeric, entries bigint)
+language sql stable security definer set search_path = public as $$
+  with v as (
+    select v.class_id, v.student_id, v.value_num, v.value_num2, i.heading_code, i.input_type,
+           make_date(substr(v.session,1,4)::int + case when v.month < 4 then 1 else 0 end, v.month, 1) as d
+      from swot_values v join swot_items i on i.id = v.item_id
+     where (p_class is null or v.class_id = p_class) and can_access_class(v.class_id)
+  )
+  select v.class_id, case when p_class is null then null else v.student_id end, v.heading_code,
+         round(avg(v.value_num) filter (where v.input_type in ('score10','level10')), 2),
+         round(100 * sum(v.value_num) filter (where v.input_type = 'attendance')
+               / nullif(sum(v.value_num2) filter (where v.input_type = 'attendance'), 0), 1),
+         null::numeric, null::numeric, count(*)
+    from v
+   where v.d between date_trunc('month', p_from)::date and p_to
+   group by 1, 2, 3
+  union all
+  select t.class_id, case when p_class is null then null else m.student_id end, 'academic',
+         round(100 * sum(m.marks) / nullif(sum(t.max_marks), 0), 1), null,
+         sum(m.marks), sum(t.max_marks), count(*)
+    from academic_marks m join academic_tests t on t.id = m.test_id
+   where m.marks is not null and t.max_marks > 0
+     and t.test_date between p_from and p_to
+     and (p_class is null or t.class_id = p_class) and can_access_class(t.class_id)
+   group by 1, 2;
+$$;
+
+-- Remove duplicate subject names left from the first trial version (only if never used)
+delete from public.subjects s
+ where s.name in ('Mathematics', 'Computer / IT')
+   and not exists (select 1 from public.academic_tests t where t.subject_id = s.id);
+
 -- Done. You should see: "Success. No rows returned"

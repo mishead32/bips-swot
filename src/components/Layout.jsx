@@ -38,7 +38,8 @@ export default function Layout({ children }) {
   const nav = [
     { to: '/', label: 'Dashboard', icon: '◧', end: true },
     { to: '/entry', label: 'Fill SWOT Sheet', icon: '✎' },
-    { to: '/sheet', label: 'Student SWOT Report', icon: '▤' },
+    { to: '/report', label: 'Class Report (students)', icon: '▦' },
+    { to: '/sheet', label: 'Student SWOT Sheet', icon: '▤' },
   ];
   if (isAdmin) nav.push({ to: '/admin', label: 'Admin Panel', icon: '⚙' });
 
@@ -88,7 +89,8 @@ export default function Layout({ children }) {
 
 function titleFor(p) {
   if (p.startsWith('/entry')) return 'Fill SWOT Sheet';
-  if (p.startsWith('/sheet')) return 'Student SWOT Report';
+  if (p.startsWith('/sheet')) return 'Student SWOT Sheet';
+  if (p.startsWith('/report')) return 'Class Report — student wise';
   if (p.startsWith('/admin')) return 'Admin Panel';
   return 'Dashboard';
 }
