@@ -35,7 +35,8 @@ export default function Login() {
           <div className="login-school-name">{SCHOOL_NAME}</div>
           <div className="muted">{SCHOOL_PLACE}</div>
         </div>
-        <h2>Teacher login</h2>
+        <h2>Login</h2>
+        <p className="muted small">Admin and teachers use the same login. Your email is your username.</p>
         <label className="field">
           <span className="field-label">Email</span>
           <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="name@school.com" />
