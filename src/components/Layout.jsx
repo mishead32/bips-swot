@@ -47,7 +47,7 @@ export default function Layout({ children }) {
     <div className="app">
       <aside className={`side ${open ? 'side-open' : ''}`}>
         <div className="brand">
-          <div className="brand-mark">B</div>
+          <img className="brand-logo" src="/logo.png" alt="BIPS" />
           <div>
             <div className="brand-name">{SCHOOL_SHORT} SWOT</div>
             <div className="brand-sub">Nurture · Observe · Evaluate</div>

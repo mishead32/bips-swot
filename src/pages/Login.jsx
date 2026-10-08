@@ -21,17 +21,23 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <div className="login-art">
+        <div className="orbs" aria-hidden="true"><i /><i /><i /><i /><i /></div>
         <div className="login-art-inner">
-          <div className="brand-mark big">B</div>
+          <div className="logo3d-stage">
+            <div className="logo3d">
+              <img src="/logo.png" alt="BIPS — Discipline, Knowledge, Dignity" />
+            </div>
+            <div className="logo3d-shadow" />
+          </div>
           <h1>SWOT Analysis<br />System</h1>
           <p>Observation &amp; evaluation to nurture our child — monthly skill ratings and academic records, one place.</p>
           <div className="login-quads">
-            <span>Strengths</span><span>Weaknesses</span><span>Opportunities</span><span>Threats</span>
+            <span style={{ '--d': '0s' }}>Strengths</span><span style={{ '--d': '.6s' }}>Weaknesses</span><span style={{ '--d': '1.2s' }}>Opportunities</span><span style={{ '--d': '1.8s' }}>Threats</span>
           </div>
         </div>
       </div>
       <form className="login-form" onSubmit={submit}>
-        <div className="login-school">
+        <div className="login-school"><img className="login-school-logo" src="/logo.png" alt="" />
           <div className="login-school-name">{SCHOOL_NAME}</div>
           <div className="muted">{SCHOOL_PLACE}</div>
         </div>

@@ -2,15 +2,15 @@
   --ink: #14262b;
   --ink-2: #3d5157;
   --muted: #6d7f84;
-  --line: #e2e0d8;
-  --line-2: #eeece6;
-  --paper: #f5f3ee;
+  --line: #dfe1ee;
+  --line-2: #eef0f7;
+  --paper: #f4f5fb;
   --card: #ffffff;
-  --brand: #123c46;
-  --brand-2: #1d5a67;
-  --brand-soft: #e3eef0;
-  --gold: #f2b544;
-  --gold-soft: #fdf3dc;
+  --brand: #2b2e83;
+  --brand-2: #3e4095;
+  --brand-soft: #e8e9f6;
+  --gold: #ed3237;
+  --gold-soft: #fde8e9;
   --ok: #2f7d4f;
   --ok-soft: #e1f2e7;
   --mid: #9a6b0a;
@@ -453,3 +453,76 @@ td { position: relative; }
   .report-filters { grid-template-columns: 1fr; }
 }
 .avg-grid .c-name { left: 0; min-width: 200px; }
+
+/* ===================== BIPS theme: navy + red, logo, 3D motion ===================== */
+.side { background: linear-gradient(180deg, #2b2e83 0%, #23256b 100%); }
+.brand-logo { width: 54px; height: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); background: #fff; border-radius: 12px; padding: 4px; transition: transform .6s; }
+.brand:hover .brand-logo { transform: perspective(400px) rotateY(360deg); }
+.brand-sub { color: #b9bbe6; }
+.nav-item { color: #d4d5f1; }
+.nav-item.active { background: #fff; color: var(--brand); box-shadow: inset 4px 0 0 var(--gold); }
+.nav-item.active .nav-icon { color: var(--gold); }
+.me-role, .session-pick, .me-actions .link-btn { color: #b9bbe6; }
+.avatar { background: var(--gold); }
+.hnum { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 3px 0 #1c1e5c; }
+.kpi-accent { background: linear-gradient(135deg, #2b2e83, #4a4db0); }
+.kpi-accent span, .kpi-accent b small { color: #c9cbf2; }
+.bar i { background: var(--gold); }
+.tab-on { border-bottom-color: var(--gold); }
+.chip, .pill-locked { background: var(--brand); color: #fff; }
+.scale-note { border-left-color: var(--gold); color: var(--ink-2); }
+.subj-n { background: var(--gold); color: #fff; }
+.sh-head { border-bottom-color: var(--gold); }
+.sh-logo { width: 74px; height: auto; }
+.sh-title { color: var(--gold); }
+.sh-h span { color: var(--gold); }
+.wd { background: var(--brand-soft); color: var(--brand); }
+
+/* 3D tilt on cards */
+.kpi, .hcard, .card { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; transform-style: preserve-3d; }
+.kpi:hover { transform: perspective(700px) rotateX(6deg) rotateY(-6deg) translateY(-4px); box-shadow: 0 18px 36px rgba(43,46,131,.18); }
+.hcard:hover { box-shadow: 0 10px 30px rgba(43,46,131,.12); }
+.kpi { animation: rise .6s both; }
+.kpi:nth-child(2) { animation-delay: .08s; } .kpi:nth-child(3) { animation-delay: .16s; } .kpi:nth-child(4) { animation-delay: .24s; }
+.hcard { animation: rise .5s both; }
+@keyframes rise { from { opacity: 0; transform: perspective(700px) rotateX(18deg) translateY(18px); } }
+
+/* Login: 3D logo + floating orbs */
+.login-art { background: radial-gradient(1200px 600px at 20% 10%, #4a4db0 0%, #2b2e83 45%, #1c1e5c 100%); perspective: 1000px; }
+.login-art::after { border-color: rgba(237,50,55,.12); }
+.logo3d-stage { perspective: 900px; width: 220px; margin-bottom: 6px; }
+.logo3d { width: 210px; padding: 18px 16px 14px; background: #fff; border-radius: 26px; transform-style: preserve-3d;
+  box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 -6px 0 rgba(43,46,131,.12);
+  animation: spin3d 9s cubic-bezier(.45,.05,.55,.95) infinite; }
+.logo3d img { width: 100%; display: block; transform: translateZ(30px); }
+.logo3d-shadow { width: 160px; height: 18px; margin: 18px auto 0; border-radius: 50%; background: rgba(0,0,0,.35); filter: blur(8px); animation: shadow3d 9s ease-in-out infinite; }
+@keyframes spin3d {
+  0%   { transform: rotateY(-18deg) rotateX(8deg) translateY(0); }
+  25%  { transform: rotateY(18deg) rotateX(-4deg) translateY(-10px); }
+  45%  { transform: rotateY(360deg) rotateX(6deg) translateY(-4px); }
+  70%  { transform: rotateY(342deg) rotateX(-6deg) translateY(-12px); }
+  100% { transform: rotateY(342deg) rotateX(8deg) translateY(0); }
+}
+@keyframes shadow3d { 0%,100% { transform: scale(1); opacity: .9; } 25%,70% { transform: scale(.8); opacity: .55; } }
+.login-art h1 { margin-top: 18px; }
+.login-art p { color: #c9cbf2; }
+.login-quads { perspective: 800px; }
+.login-quads span { background: rgba(255,255,255,.06); backdrop-filter: blur(4px); animation: tile 6s ease-in-out infinite; animation-delay: var(--d); transform-style: preserve-3d; }
+.login-quads span::first-letter { color: var(--gold); }
+@keyframes tile { 0%,100% { transform: rotateX(0) rotateY(0) translateZ(0); } 50% { transform: rotateX(10deg) rotateY(-12deg) translateZ(18px); background: rgba(237,50,55,.18); } }
+.orbs { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.orbs i { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(237,50,55,.35) 40%, rgba(237,50,55,0) 70%); animation: float 14s ease-in-out infinite; }
+.orbs i:nth-child(1) { width: 90px; height: 90px; left: 8%; top: 12%; }
+.orbs i:nth-child(2) { width: 46px; height: 46px; left: 78%; top: 18%; animation-delay: -3s; background: radial-gradient(circle at 30% 30%, #fff, rgba(120,124,230,.5) 45%, transparent 70%); }
+.orbs i:nth-child(3) { width: 140px; height: 140px; left: 70%; top: 70%; animation-delay: -6s; }
+.orbs i:nth-child(4) { width: 30px; height: 30px; left: 20%; top: 80%; animation-delay: -9s; background: radial-gradient(circle at 30% 30%, #fff, rgba(120,124,230,.6) 45%, transparent 70%); }
+.orbs i:nth-child(5) { width: 64px; height: 64px; left: 45%; top: 6%; animation-delay: -4s; }
+@keyframes float { 0%,100% { transform: translate3d(0,0,0) scale(1); } 33% { transform: translate3d(18px,-26px,0) scale(1.08); } 66% { transform: translate3d(-14px,16px,0) scale(.94); } }
+.login-school { display: flex; flex-direction: column; gap: 2px; }
+.login-school-logo { width: 96px; margin-bottom: 8px; }
+.btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 4px 0 #1c1e5c; transform: translateY(0); transition: transform .12s, box-shadow .12s, background .15s; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 0 #1c1e5c; }
+.btn-primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #1c1e5c; }
+.spinner { border-top-color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 960px) { .logo3d-stage { width: 150px; } .logo3d { width: 140px; } .orbs { display: none; } }

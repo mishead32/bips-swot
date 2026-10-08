@@ -204,7 +204,7 @@ export default function StudentSheet() {
       {!studentId ? <Empty icon="📄" title="Select class and student to view the SWOT sheet" /> : loading || !student ? <Spinner /> : (
         <div className="sheet">
           <div className="sh-head">
-            <div className="brand-mark">B</div>
+            <img className="sh-logo" src="/logo.png" alt="BIPS" />
             <div>
               <div className="sh-school">{SCHOOL_NAME}</div>
               <div className="sh-addr">{SCHOOL_PLACE}</div>
