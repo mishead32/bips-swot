@@ -77,7 +77,7 @@ export default function Teachers() {
           return {
             name: (r.name || '').trim(), email: (r.email || '').trim().toLowerCase(),
             password: (r.password || r.temporary_password || '').trim(),
-            role: ['admin', 'hod'].includes((r.role || '').trim().toLowerCase()) ? (r.role || '').trim().toLowerCase() : 'teacher',
+            role: /^(hod|head)/i.test((r.role || '').trim()) ? 'hod' : 'teacher',
             assigned_classes: cls.filter((c) => ids.has(c)), phone: (r.phone || '').trim(),
             problem: !r.name || !r.email ? 'Name/email missing' : (r.password || r.temporary_password || '').trim().length < 6 ? 'Password < 6 chars' : bad.length ? `Unknown class: ${bad.join(', ')}` : '',
             result: '',
@@ -122,7 +122,7 @@ export default function Teachers() {
                 <tr key={t.id}>
                   <td><b>{t.name}</b>{t.phone && <div className="stu-sub">{t.phone}</div>}</td>
                   <td>{t.email}</td>
-                  <td><span className={`pill ${t.role === 'admin' ? 'pill-locked' : 'pill-new'}`}>{t.role}</span></td>
+                  <td><span className={`pill ${t.role === 'admin' ? 'pill-locked' : t.role === 'hod' ? 'pill-draft' : 'pill-new'}`}>{t.role === 'admin' ? 'Admin' : t.role === 'hod' ? 'Head of Department' : 'Teacher'}</span></td>
                   <td className="cls-cell">{t.role === 'admin' ? <span className="muted">All classes</span> : t.assigned_classes.length ? t.assigned_classes.join(', ') : <span className="txt-err">None</span>}</td>
                   <td>{t.is_active ? 'Active' : <span className="txt-err">Inactive</span>}</td>
                   <td className="row-actions">
@@ -136,7 +136,7 @@ export default function Teachers() {
           </table>
         </div>
       )}
-      <p className="muted small">{rows.length} staff login(s). Teachers CSV columns: <code>name, email, password, role, assigned_classes</code> — separate many classes with <code>;</code> e.g. <code>I-Sunflower;II-Arctic</code></p>
+      <p className="muted small">{rows.length} staff login(s). Teachers CSV columns: <code>name, email, password, role, assigned_classes</code> (role = <code>teacher</code> or <code>hod</code>) — separate many classes with <code>;</code> e.g. <code>I-Sunflower;II-Arctic</code></p>
 
       {edit && (
         <Modal wide title={edit.id ? `Edit ${edit.name}` : 'Add New Teacher'} onClose={() => setEdit(null)}
@@ -146,13 +146,16 @@ export default function Teachers() {
             <Field label="Email (login ID)"><input type="email" disabled={Boolean(edit.id)} value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} /></Field>
             {!edit.id && <Field label="Temporary password" hint="Min 6 characters. Teacher can change it after login."><input value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} placeholder="e.g. Bips@1234" /></Field>}
             <Field label="Phone (optional)"><input value={edit.phone} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} /></Field>
-            <Field label="Role">
-              <select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>
-                <option value="teacher">Teacher — only assigned classes</option>
-                <option value="hod">HOD — assigned classes + fills Pedagogy &amp; Notebook Inspection</option>
-                <option value="admin">Admin — everything</option>
-              </select>
-            </Field>
+            {edit.role === 'admin' ? (
+              <Field label="User type"><input value="Admin — master control (only one)" disabled /></Field>
+            ) : (
+              <Field label="User type">
+                <select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>
+                  <option value="teacher">Teacher — fills SWOT for assigned classes</option>
+                  <option value="hod">Head of Department — SWOT + Pedagogy &amp; Notebook Inspection</option>
+                </select>
+              </Field>
+            )}
             {edit.id && <Field label="Status"><select value={edit.is_active ? '1' : '0'} onChange={(e) => setEdit({ ...edit, is_active: e.target.value === '1' })}><option value="1">Active</option><option value="0">Inactive (cannot log in to data)</option></select></Field>}
           </div>
           {edit.role !== 'admin' && (

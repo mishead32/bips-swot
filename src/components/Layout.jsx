@@ -72,7 +72,7 @@ export default function Layout({ children }) {
             <div className="avatar">{(profile.name || '?').slice(0, 1).toUpperCase()}</div>
             <div className="me-text">
               <div className="me-name">{profile.name}</div>
-              <div className="me-role">{isAdmin ? 'Admin' : profile.role === 'hod' ? 'HOD' : `Teacher · ${myClasses.length} class${myClasses.length === 1 ? '' : 'es'}`}</div>
+              <div className="me-role">{isAdmin ? 'Admin' : profile.role === 'hod' ? 'Head of Department' : `Teacher · ${myClasses.length} class${myClasses.length === 1 ? '' : 'es'}`}</div>
             </div>
           </div>
           <div className="me-actions">
