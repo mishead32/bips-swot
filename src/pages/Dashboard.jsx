@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { fetchAll, supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { errMsg, fmt } from '../lib/util';
+import { Link } from 'react-router-dom';
 import { Empty, Spinner, useToast } from '../components/ui';
 import PeriodFilter, { defaultPeriod, periodRange } from '../components/PeriodFilter';
 import AvgTable from '../components/AvgTable';
 
 export default function Dashboard() {
-  const { masters, myClasses, profile, isAdmin } = useAuth();
+  const { masters, myClasses, profile, isAdmin, isHod } = useAuth();
+  const [evals, setEvals] = useState([]);
   const toast = useToast();
   const [period, setPeriod] = useState(defaultPeriod);
   const [data, setData] = useState({});
@@ -26,7 +28,9 @@ export default function Dashboard() {
           fetchAll(() => supabase.from('students').select('class_id').eq('is_active', true)),
         ]);
         if (error) throw error;
+        const ev = await supabase.from('evaluations').select('form_code,total,max_total').gte('eval_date', range.from).lte('eval_date', range.to);
         if (!alive) return;
+        setEvals(ev.data || []);
         const d = {};
         rows.forEach((r) => { d[`${r.class_id}|${r.heading_code}`] = r; });
         setData(d);
@@ -66,6 +70,22 @@ export default function Dashboard() {
         <div className="kpi kpi-accent"><span>Average SWOT rating · {range.label}</span><b>{fmt(scoreAvg)}<small> / 10</small></b></div>
         <div className="kpi"><span>Academic marks · {range.label}</span><b>{acad.max ? `${fmt((acad.got / acad.max) * 100, 1)}%` : '–'}</b>{acad.max > 0 && <span>{fmt(acad.got)} got of {fmt(acad.max)} planned</span>}</div>
       </div>
+
+      {masters.evalForms.length > 0 && (
+        <div className="eval-strip">
+          {masters.evalForms.map((f) => {
+            const list = evals.filter((e) => e.form_code === f.code);
+            const a = list.length ? list.reduce((x, e) => x + Number(e.total), 0) / list.length : null;
+            return (
+              <Link key={f.code} to={`/eval-reports?form=${f.code}`} className="eval-tile">
+                <span className="et-name">Teachers · {f.name}</span>
+                <b>{a == null ? '–' : `${fmt(a)} / ${fmt(f.max_total)}`}</b>
+                <span className="et-sub">{list.length} evaluation(s) · {range.label}{!isHod ? ' (yours)' : ''}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {loading ? <Spinner /> : !myClasses.length ? <Empty icon="🏫" title="No classes assigned yet" /> : (
         <AvgTable

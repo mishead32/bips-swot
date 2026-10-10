@@ -526,3 +526,57 @@ td { position: relative; }
 .spinner { border-top-color: var(--gold); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 960px) { .logo3d-stage { width: 150px; } .logo3d { width: 140px; } .orbs { display: none; } }
+
+/* ===================== Teacher evaluation (Pedagogy / Notebook) ===================== */
+.nav-group { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: #8f92d6; font-weight: 700; padding: 14px 12px 4px; }
+.eval-head { display: flex; flex-direction: column; gap: 14px; }
+.eval-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-bottom: 2px solid var(--gold); padding-bottom: 8px; }
+.eval-title h2 { color: var(--brand); letter-spacing: .02em; }
+.eval-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.eval-grid td { padding: 8px; }
+.eval-param { font-weight: 600; min-width: 260px; }
+.c-opts { width: 190px; text-align: center !important; }
+.opt-row { display: inline-flex; gap: 6px; }
+.opt { width: 44px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; font-family: var(--mono); cursor: pointer; transition: transform .15s; }
+.opt:hover { transform: translateY(-2px); border-color: var(--brand-2); }
+.opt.on { color: #fff; transform: perspective(300px) rotateX(10deg); box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.opt.on.m0 { background: var(--bad); border-color: var(--bad); }
+.opt.on.m1 { background: #d99a14; border-color: #d99a14; }
+.opt.on.m2 { background: var(--ok); border-color: var(--ok); }
+.nb-options { display: flex; flex-direction: column; gap: 6px; }
+.nb-opt { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; background: #fff; transition: all .15s; }
+.nb-opt:hover { border-color: var(--brand-2); }
+.nb-opt.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 4px 0 0 var(--gold); }
+.nb-opt input { width: auto; accent-color: var(--brand); }
+.nb-label { flex: 1; font-weight: 600; }
+.nb-marks { font-family: var(--mono); font-weight: 800; background: var(--line-2); border-radius: 8px; padding: 3px 10px; }
+.nb-opt.on .nb-marks { background: var(--brand); color: #fff; }
+.done-card { max-width: 520px; margin: 30px auto; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.done-tick { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 30px; display: grid; place-items: center; animation: rise .5s both; }
+.done-score { font-size: 30px; font-weight: 800; font-family: var(--mono); padding: 10px 22px; border-radius: 14px; display: flex; flex-direction: column; }
+.done-score small { font-size: 13px; font-family: var(--font); }
+.done-score.band-high { background: var(--ok-soft); color: var(--ok); } .done-score.band-mid { background: var(--mid-soft); color: var(--mid); } .done-score.band-low { background: var(--bad-soft); color: var(--bad); }
+.pill.band-high { background: var(--ok-soft); color: var(--ok); } .pill.band-mid { background: var(--mid-soft); color: var(--mid); } .pill.band-low { background: var(--bad-soft); color: var(--bad); }
+.eval-sum .wrap-th { white-space: normal; min-width: 110px; }
+.mono { font-family: var(--mono); font-weight: 600; }
+.detail-row > td { background: #f7f8fd !important; padding: 10px 14px; }
+.grid.inner { background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+.eval-sheet { display: flex; flex-direction: column; gap: 12px; }
+.eval-total { font-size: 18px; font-weight: 800; padding: 10px 14px; border-radius: 10px; }
+.eval-total.band-high { background: var(--ok-soft); color: var(--ok); } .eval-total.band-mid { background: var(--mid-soft); color: var(--mid); } .eval-total.band-low { background: var(--bad-soft); color: var(--bad); }
+.eval-total span { font-size: 14px; }
+.eval-remarks { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; }
+.nb-picked td { background: #eef8f1; font-weight: 700; color: var(--ok); }
+.eval-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.eval-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px; border-radius: var(--radius); text-decoration: none; color: var(--ink); background: linear-gradient(135deg, #fff, #fdeeee); border: 1px solid #f6cfd0; box-shadow: var(--shadow); transition: transform .3s; }
+.eval-tile:hover { transform: perspective(700px) rotateX(5deg) translateY(-3px); }
+.et-name { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .04em; }
+.eval-tile b { font-size: 22px; font-family: var(--mono); color: var(--brand); }
+.et-sub { font-size: 12px; color: var(--muted); }
+@media print {
+  body:has(.print-area) * { visibility: hidden; }
+  body:has(.print-area) .print-area, body:has(.print-area) .print-area * { visibility: visible; }
+  body:has(.print-area) .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  body:has(.print-area) .modal { box-shadow: none; }
+}
+@media (max-width: 960px) { .eval-fields, .eval-strip { grid-template-columns: 1fr; } .eval-param { min-width: 160px; } }

@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import SwotEntry from './pages/entry/SwotEntry';
 import StudentSheet from './pages/StudentSheet';
 import ClassReport from './pages/ClassReport';
+import EvalForm from './pages/eval/EvalForm';
+import EvalReports from './pages/eval/EvalReports';
 import Admin from './pages/admin/Admin';
 
 function NotConfigured() {
@@ -49,6 +51,8 @@ function Gate() {
         <Route path="/entry" element={<SwotEntry />} />
         <Route path="/sheet" element={<StudentSheet />} />
         <Route path="/report" element={<ClassReport />} />
+        <Route path="/eval/:code" element={<EvalForm />} />
+        <Route path="/eval-reports" element={<EvalReports />} />
         <Route path="/admin/*" element={isAdmin ? <Admin /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

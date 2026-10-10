@@ -77,7 +77,7 @@ export default function Teachers() {
           return {
             name: (r.name || '').trim(), email: (r.email || '').trim().toLowerCase(),
             password: (r.password || r.temporary_password || '').trim(),
-            role: (r.role || 'teacher').trim().toLowerCase() === 'admin' ? 'admin' : 'teacher',
+            role: ['admin', 'hod'].includes((r.role || '').trim().toLowerCase()) ? (r.role || '').trim().toLowerCase() : 'teacher',
             assigned_classes: cls.filter((c) => ids.has(c)), phone: (r.phone || '').trim(),
             problem: !r.name || !r.email ? 'Name/email missing' : (r.password || r.temporary_password || '').trim().length < 6 ? 'Password < 6 chars' : bad.length ? `Unknown class: ${bad.join(', ')}` : '',
             result: '',
@@ -149,12 +149,13 @@ export default function Teachers() {
             <Field label="Role">
               <select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>
                 <option value="teacher">Teacher — only assigned classes</option>
+                <option value="hod">HOD — assigned classes + fills Pedagogy &amp; Notebook Inspection</option>
                 <option value="admin">Admin — everything</option>
               </select>
             </Field>
             {edit.id && <Field label="Status"><select value={edit.is_active ? '1' : '0'} onChange={(e) => setEdit({ ...edit, is_active: e.target.value === '1' })}><option value="1">Active</option><option value="0">Inactive (cannot log in to data)</option></select></Field>}
           </div>
-          {edit.role === 'teacher' && (
+          {edit.role !== 'admin' && (
             <Field label={`Assigned classes (${edit.assigned_classes.length} selected)`}>
               <ClassPicker classes={classes} value={edit.assigned_classes} onChange={(v) => setEdit({ ...edit, assigned_classes: v })} />
             </Field>

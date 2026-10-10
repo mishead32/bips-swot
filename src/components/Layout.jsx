@@ -30,18 +30,25 @@ function ChangePassword({ onClose }) {
 }
 
 export default function Layout({ children }) {
-  const { profile, isAdmin, signOut, myClasses } = useAuth();
+  const { profile, isAdmin, isHod, signOut, myClasses } = useAuth();
   const [pw, setPw] = useState(false);
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
   const nav = [
+    { group: 'Students — SWOT' },
     { to: '/', label: 'Dashboard', icon: '◧', end: true },
     { to: '/entry', label: 'Fill SWOT Sheet', icon: '✎' },
     { to: '/report', label: 'Class Report (students)', icon: '▦' },
     { to: '/sheet', label: 'Student SWOT Sheet', icon: '▤' },
+    { group: 'Teachers — Evaluation' },
+    ...(isHod ? [
+      { to: '/eval/pedagogy', label: 'Pedagogy', icon: '◎' },
+      { to: '/eval/notebook', label: 'Notebook Inspection', icon: '▣' },
+    ] : []),
+    { to: '/eval-reports', label: isHod ? 'Evaluation Reports' : 'My Evaluations', icon: '▥' },
   ];
-  if (isAdmin) nav.push({ to: '/admin', label: 'Admin Panel', icon: '⚙' });
+  if (isAdmin) nav.push({ group: 'Admin' }, { to: '/admin', label: 'Admin Panel', icon: '⚙' });
 
   return (
     <div className="app">
@@ -54,7 +61,7 @@ export default function Layout({ children }) {
           </div>
         </div>
         <nav onClick={() => setOpen(false)}>
-          {nav.map((n) => (
+          {nav.map((n) => n.group ? <div key={n.group} className="nav-group">{n.group}</div> : (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">{n.icon}</span>{n.label}
             </NavLink>
@@ -65,7 +72,7 @@ export default function Layout({ children }) {
             <div className="avatar">{(profile.name || '?').slice(0, 1).toUpperCase()}</div>
             <div className="me-text">
               <div className="me-name">{profile.name}</div>
-              <div className="me-role">{isAdmin ? 'Admin' : `Teacher · ${myClasses.length} class${myClasses.length === 1 ? '' : 'es'}`}</div>
+              <div className="me-role">{isAdmin ? 'Admin' : profile.role === 'hod' ? 'HOD' : `Teacher · ${myClasses.length} class${myClasses.length === 1 ? '' : 'es'}`}</div>
             </div>
           </div>
           <div className="me-actions">
@@ -92,5 +99,8 @@ function titleFor(p) {
   if (p.startsWith('/sheet')) return 'Student SWOT Sheet';
   if (p.startsWith('/report')) return 'Class Report — student wise';
   if (p.startsWith('/admin')) return 'Admin Panel';
+  if (p.startsWith('/eval/pedagogy')) return 'Pedagogy — teacher evaluation';
+  if (p.startsWith('/eval/notebook')) return 'Notebook Inspection — teacher evaluation';
+  if (p.startsWith('/eval-reports')) return 'Teacher Evaluation Reports';
   return 'Dashboard';
 }

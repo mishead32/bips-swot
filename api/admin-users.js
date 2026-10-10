@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       }
       const { error: insErr } = await admin.from('teachers').upsert({
         id: userId, email, name,
-        role: body.role === 'admin' ? 'admin' : 'teacher',
+        role: ['admin', 'hod'].includes(body.role) ? body.role : 'teacher',
         assigned_classes: Array.isArray(body.assigned_classes) ? body.assigned_classes : [],
         phone: body.phone || null,
         is_active: true,

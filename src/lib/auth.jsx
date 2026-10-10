@@ -26,17 +26,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loadMasters = useCallback(async () => {
-    const [cls, heads, items, subs] = await Promise.all([
+    const [cls, heads, items, subs, forms, crit] = await Promise.all([
       supabase.from('classes').select('*').order('sort_order'),
       supabase.from('swot_headings').select('*').order('sort_order'),
       supabase.from('swot_items').select('*').order('sort_order'),
       supabase.from('subjects').select('*').order('sort_order'),
+      supabase.from('eval_forms').select('*').order('sort_order'),
+      supabase.from('eval_criteria').select('*').order('sort_order'),
     ]);
     setMasters({
       classes: cls.data || [],
       headings: heads.data || [],
       items: items.data || [],
       subjects: subs.data || [],
+      evalForms: forms.data || [],
+      evalCriteria: crit.data || [],
     });
   }, []);
 
@@ -63,12 +67,13 @@ export function AuthProvider({ children }) {
   };
 
   const isAdmin = profile?.role === 'admin';
+  const isHod = profile?.role === 'admin' || profile?.role === 'hod';
   const myClasses = !masters ? [] : isAdmin
     ? masters.classes.filter((c) => c.is_active)
     : masters.classes.filter((c) => c.is_active && profile?.assigned_classes?.includes(c.id));
 
   const value = {
-    session, profile, profileError, loading, masters, isAdmin, myClasses,
+    session, profile, profileError, loading, masters, isAdmin, isHod, myClasses,
     academicSession, changeSession,
     reloadMasters: loadMasters,
     signOut: () => supabase.auth.signOut(),

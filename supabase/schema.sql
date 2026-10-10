@@ -512,4 +512,142 @@ delete from public.subjects s
  where s.name in ('Mathematics', 'Computer / IT')
    and not exists (select 1 from public.academic_tests t where t.subject_id = s.id);
 
+
+-- =====================================================================
+-- 6. TEACHER EVALUATION: PEDAGOGY + NOTEBOOK INSPECTION (filled by HODs)
+-- =====================================================================
+alter table public.teachers drop constraint if exists teachers_role_check;
+alter table public.teachers add constraint teachers_role_check check (role in ('admin','hod','teacher'));
+
+create or replace function public.is_hod() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from teachers where id = auth.uid() and role in ('admin','hod') and is_active);
+$$;
+
+-- staff names for the "teacher" picker (HOD / Admin only)
+create or replace function public.list_staff()
+returns table (id uuid, name text, email text, role text)
+language sql stable security definer set search_path = public as $$
+  select t.id, t.name, t.email, t.role from teachers t
+   where t.is_active and is_hod() order by t.name;
+$$;
+
+create table if not exists public.eval_forms (
+  code       text primary key,          -- 'pedagogy' | 'notebook'
+  name       text not null,
+  max_total  numeric(6,2) not null,
+  grade_note text,
+  sort_order int not null default 1
+);
+
+-- one row per parameter; options = list of {label, marks}
+create table if not exists public.eval_criteria (
+  id         serial primary key,
+  form_code  text not null references public.eval_forms(code) on update cascade,
+  section    text not null,
+  name       text not null,
+  options    jsonb not null,
+  sort_order int not null default 999,
+  is_active  boolean not null default true,
+  unique (form_code, section, name)
+);
+
+create table if not exists public.evaluations (
+  id              bigserial primary key,
+  form_code       text not null references public.eval_forms(code),
+  eval_date       date not null,
+  teacher_id      uuid references public.teachers(id) on delete set null,
+  teacher_name    text not null,
+  class_id        text,
+  subject         text,
+  topic           text,
+  scores          jsonb not null default '{}',   -- { criterion_id: { "marks": 2, "label": "...", "remark": "..." } }
+  total           numeric(6,2),
+  max_total       numeric(6,2),
+  remarks         text,
+  evaluator_id    uuid default auth.uid(),
+  evaluator_name  text,
+  created_at      timestamptz not null default now()
+);
+create index if not exists evaluations_lookup on public.evaluations(form_code, eval_date);
+create index if not exists evaluations_teacher on public.evaluations(teacher_id);
+
+-- total, max and evaluator are always calculated by the database
+create or replace function public.trg_evaluations() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  select coalesce(sum((v->>'marks')::numeric), 0) into new.total from jsonb_each(new.scores) as e(k, v);
+  select max_total into new.max_total from eval_forms where code = new.form_code;
+  if tg_op = 'INSERT' then
+    new.evaluator_id := auth.uid();
+    new.evaluator_name := my_name();
+    new.created_at := now();
+  end if;
+  return new;
+end $$;
+drop trigger if exists evaluations_fill on public.evaluations;
+create trigger evaluations_fill before insert or update on public.evaluations
+  for each row execute function public.trg_evaluations();
+
+alter table public.eval_forms    enable row level security;
+alter table public.eval_criteria enable row level security;
+alter table public.evaluations   enable row level security;
+
+drop policy if exists eval_forms_read on public.eval_forms;
+drop policy if exists eval_forms_admin on public.eval_forms;
+create policy eval_forms_read  on public.eval_forms for select to authenticated using (true);
+create policy eval_forms_admin on public.eval_forms for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists eval_criteria_read on public.eval_criteria;
+drop policy if exists eval_criteria_admin on public.eval_criteria;
+create policy eval_criteria_read  on public.eval_criteria for select to authenticated using (true);
+create policy eval_criteria_admin on public.eval_criteria for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- HOD/Admin see all; a teacher sees only own evaluations. HOD/Admin add. Only Admin edits/deletes.
+drop policy if exists evaluations_read on public.evaluations;
+drop policy if exists evaluations_add  on public.evaluations;
+drop policy if exists evaluations_edit on public.evaluations;
+drop policy if exists evaluations_del  on public.evaluations;
+create policy evaluations_read on public.evaluations for select to authenticated using (public.is_hod() or teacher_id = auth.uid());
+create policy evaluations_add  on public.evaluations for insert to authenticated with check (public.is_hod());
+create policy evaluations_edit on public.evaluations for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy evaluations_del  on public.evaluations for delete to authenticated using (public.is_admin());
+
+insert into public.eval_forms (code, name, max_total, grade_note, sort_order) values
+  ('pedagogy', 'Pedagogy', 30, 'Marks 0-2 for each parameter', 1),
+  ('notebook', 'Notebook Inspection', 10, '8-10 Excellent | 5-7 Needs Monitoring | 0-4 Critical', 2)
+on conflict (code) do nothing;
+
+insert into public.eval_criteria (form_code, section, name, options, sort_order)
+select 'pedagogy', s, n, '[{"label":"0","marks":0},{"label":"1","marks":1},{"label":"2","marks":2}]'::jsonb, o from (values
+  ('Section A: Classroom Execution (10 Marks)', 'Class starts with a thinking question', 1),
+  ('Section A: Classroom Execution (10 Marks)', 'Concept explained clearly', 2),
+  ('Section A: Classroom Execution (10 Marks)', 'Students asked to apply concept', 3),
+  ('Section A: Classroom Execution (10 Marks)', 'Students asked to explain in own words', 4),
+  ('Section A: Classroom Execution (10 Marks)', 'Class ends with reflection/questioning', 5),
+  ('Section B: Student Engagement (10 Marks)', 'Number of students participating', 6),
+  ('Section B: Student Engagement (10 Marks)', 'Teacher encourages shy students', 7),
+  ('Section B: Student Engagement (10 Marks)', 'Class energy & interaction level', 8),
+  ('Section B: Student Engagement (10 Marks)', 'Students attentive and involved', 9),
+  ('Section B: Student Engagement (10 Marks)', 'No over-dependence on dictation', 10),
+  ('Section C: Student Development (10 Marks)', 'Students speak confidently', 11),
+  ('Section C: Student Development (10 Marks)', 'Students understand concepts', 12),
+  ('Section C: Student Development (10 Marks)', 'Students ask questions', 13),
+  ('Section C: Student Development (10 Marks)', 'Students explain clearly', 14),
+  ('Section C: Student Development (10 Marks)', 'Evidence of thinking (not memorizing)', 15)
+) v(s, n, o)
+on conflict (form_code, section, name) do nothing;
+
+insert into public.eval_criteria (form_code, section, name, options, sort_order) values
+  ('notebook', '1. Frequency & Timeliness (2 Marks)', 'Frequency & Timeliness',
+   '[{"label":"Checked within 48 hours regularly","marks":2},{"label":"Occasional delay (3–5 days)","marks":1},{"label":"Irregular / long gaps","marks":0}]', 1),
+  ('notebook', '2. Coverage & Completeness (2 Marks)', 'Coverage & Completeness',
+   '[{"label":"All work checked (CW + HW)","marks":2},{"label":"Partial checking","marks":1},{"label":"Large portions unchecked","marks":0}]', 2),
+  ('notebook', '3. Quality of Correction (3 Marks)', 'Quality of Correction',
+   '[{"label":"Errors clearly identified + explained","marks":3},{"label":"Errors marked but no explanation","marks":2},{"label":"Only ticks/crosses","marks":1},{"label":"No real checking","marks":0}]', 3),
+  ('notebook', '4. Student Correction Follow-up (2 Marks)', 'Student Correction Follow-up',
+   '[{"label":"Students corrected all mistakes","marks":2},{"label":"Partial corrections","marks":1},{"label":"No corrections done","marks":0}]', 4),
+  ('notebook', '5. Feedback Quality (1 Mark)', 'Feedback Quality',
+   '[{"label":"Specific, constructive feedback","marks":1},{"label":"Generic (“Good”, “Nice”)","marks":0}]', 5)
+on conflict (form_code, section, name) do nothing;
+
 -- Done. You should see: "Success. No rows returned"
